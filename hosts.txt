@@ -1,0 +1,4 @@
+test@anubis:/home/test
+nixos@antarctica:/home/nixos
+nixos@gibraltar:/home/nixos
+nixos@numbani:/home/nixos
