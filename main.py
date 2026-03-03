@@ -1,5 +1,7 @@
+import argparse
 import json
 import subprocess
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -107,19 +109,63 @@ def cmd_app() -> None:
             print(app["name"])
 
 
+def cmd_logs(app_name: str, hostname: str):
+    """Stream logs for a docker compose app via SSH."""
+    if not CACHE_FILE.exists():
+        print("No cache found. Run 'main.py sync' first.")
+        return
+
+    with open(CACHE_FILE) as f:
+        cache = json.load(f)
+
+    apps = cache.get("apps", [])
+    matching_apps = [app for app in apps if app["name"] == app_name]
+    if hostname:
+        matching_apps = [app for app in matching_apps if hostname in app["remote"]]
+
+    if not matching_apps:
+        print(f"No app found with name: {app_name}")
+        return
+
+    if len(matching_apps) > 1:
+        print(
+            f"Multiple apps found with name: {app_name}. Perhaps add --H/--hostname filter?"
+        )
+        return
+
+    matching_app = matching_apps[0]
+
+    host = matching_app["remote"].split(":")[0]
+    folder = matching_app["remote"].split(":")[1]
+    logs_command = f"cd {app_name} && docker compose logs {app_name} -n 100"
+    print(run_ssh_command(host, folder, logs_command))
+
+
 if __name__ == "__main__":
-    import sys
+    import argparse
 
-    if len(sys.argv) < 2:
-        print("Usage: python main.py <command>\nCommands: sync, apps")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description="Sekai Cloud Control CLI")
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
-    command = sys.argv[1]
+    parser_sync = subparsers.add_parser("sync", help="Sync docker apps from all hosts")
+    parser_apps = subparsers.add_parser("apps", help="List all cached docker apps")
+    parser_logs = subparsers.add_parser("logs", help="Stream logs for a docker app")
+    parser_logs.add_argument("app_name", help="Name of the docker app")
+    parser_logs.add_argument(
+        "-H",
+        "--hostname",
+        dest="hostname",
+        help="Filter by hostname for duplicate apps",
+    )
 
-    if command == "sync":
+    args = parser.parse_args()
+
+    if args.command == "sync":
         cmd_sync()
-    elif command == "apps":
+    elif args.command == "apps":
         cmd_app()
+    elif args.command == "logs":
+        cmd_logs(args.app_name, args.hostname)
     else:
-        print(f"Unknown command: {command}")
+        print("Usage: python main.py <command> [options]\nCommands: sync, apps, logs")
         sys.exit(1)
