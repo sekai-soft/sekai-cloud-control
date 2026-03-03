@@ -33,9 +33,22 @@ def parse_hosts_file() -> list[dict[str, str]]:
     return hosts
 
 
-def run_ssh_command(host: str, folder: str, command: str) -> str:
+def run_ssh_command(
+    host: str, folder: str, command: str, interactive: bool = False
+) -> str:
     """Run a command on a remote host via SSH."""
     cmd = f"ssh {host} 'cd {folder} && {command}'"
+    if interactive:
+        result = subprocess.run(
+            cmd,
+            shell=True,
+            executable="/bin/sh",
+            stdin=sys.stdin,
+            stdout=sys.stdout,
+            stderr=sys.stderr,
+            text=False,
+        )
+        return ""
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
     return result.stdout
 
@@ -137,8 +150,8 @@ def cmd_logs(app_name: str, hostname: str):
 
     host = matching_app["remote"].split(":")[0]
     folder = matching_app["remote"].split(":")[1]
-    logs_command = f"cd {app_name} && docker compose logs {app_name} -n 100"
-    print(run_ssh_command(host, folder, logs_command))
+    logs_command = f"cd {app_name} && docker compose logs {app_name} -n 100 -f"
+    run_ssh_command(host, folder, logs_command, interactive=True)
 
 
 if __name__ == "__main__":
