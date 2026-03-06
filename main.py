@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 
-from sekai_cloud_control import cmd_sync, cmd_apps, cmd_logs, cmd_ps
+from sekai_cloud_control import cmd_sync, cmd_apps, cmd_logs, cmd_ps, cmd_restart
 
 CACHE_FILE = Path(__file__).parent / "cache.json"
 
@@ -39,6 +39,14 @@ if __name__ == "__main__":
         dest="hostname",
         help="Filter by hostname for duplicate apps",
     )
+    parser_restart = subparsers.add_parser("restart", help="Restart a docker app")
+    parser_restart.add_argument("app_name", help="Name of the docker app")
+    parser_restart.add_argument(
+        "-H",
+        "--hostname",
+        dest="hostname",
+        help="Filter by hostname for duplicate apps",
+    )
 
     args = parser.parse_args()
 
@@ -50,8 +58,10 @@ if __name__ == "__main__":
         cmd_logs(args.app_name, args.hostname)
     elif args.command == "ps":
         cmd_ps(args.app_name, args.hostname)
+    elif args.command == "restart":
+        cmd_restart(args.app_name, args.hostname)
     else:
         print(
-            "Usage: python main.py <command> [options]\nCommands: sync, apps, logs, ps"
+            "Usage: python main.py <command> [options]\nCommands: sync, apps, logs, ps, restart"
         )
         sys.exit(1)
