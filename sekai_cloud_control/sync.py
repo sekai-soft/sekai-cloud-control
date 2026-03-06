@@ -13,21 +13,47 @@ def cmd_sync(hostname: str | None = None) -> None:
     hosts = parse_hosts_file()
 
     if hostname:
-        hosts = [h for h in hosts if h["hostname"] == hostname]
-        if not hosts:
+        matching_hosts = [h for h in hosts if h["hostname"] == hostname]
+        if not matching_hosts:
             print(f"No host found with hostname: {hostname}")
             return
 
-    all_apps = []
+        try:
+            with open(CACHE_FILE) as f:
+                cache: dict = json.load(f)
+        except FileNotFoundError:
+            cache = {"apps": []}
 
-    for h in hosts:
-        apps = get_docker_apps(h["host"], h["folder"])
-        all_apps.extend(apps)
-        print(f"Synced {len(apps)} apps from {h['host']}")
+        cache["apps"] = [
+            a
+            for a in cache.get("apps", [])
+            if a["remote"].split("@")[1].split(":")[0] != hostname
+        ]
 
-    last_updated = datetime.now().isoformat()
-    cache = {"last_updated": last_updated, "hosts": hosts, "apps": all_apps}
-    with open(CACHE_FILE, "w") as f:
-        json.dump(cache, f, indent=2)
+        all_apps = cache.get("apps", [])
 
-    print(f"\nCached {len(all_apps)} total apps to {CACHE_FILE}")
+        for h in matching_hosts:
+            apps = get_docker_apps(h["host"], h["folder"])
+            all_apps.extend(apps)
+            print(f"Synced {len(apps)} apps from {h['host']}")
+
+        cache["last_updated"] = datetime.now().isoformat()
+        cache["apps"] = all_apps
+        with open(CACHE_FILE, "w") as f:
+            json.dump(cache, f, indent=2)
+
+        print(f"\nCached {len(all_apps)} total apps to {CACHE_FILE}")
+    else:
+        all_apps = []
+
+        for h in hosts:
+            apps = get_docker_apps(h["host"], h["folder"])
+            all_apps.extend(apps)
+            print(f"Synced {len(apps)} apps from {h['host']}")
+
+        last_updated = datetime.now().isoformat()
+        cache = {"last_updated": last_updated, "hosts": hosts, "apps": all_apps}
+        with open(CACHE_FILE, "w") as f:
+            json.dump(cache, f, indent=2)
+
+        print(f"\nCached {len(all_apps)} total apps to {CACHE_FILE}")

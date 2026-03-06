@@ -1,8 +1,18 @@
 """SSH utility functions for running remote commands."""
 
+import signal
 import subprocess
 import sys
 from typing import Any
+
+
+def handle_interrupt(signum, frame):
+    print("\nInterrupted")
+    sys.exit(0)
+
+
+signal.signal(signal.SIGINT, handle_interrupt)
+signal.signal(signal.SIGTERM, handle_interrupt)
 
 
 def run_ssh_command(
