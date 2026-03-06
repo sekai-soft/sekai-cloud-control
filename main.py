@@ -154,6 +154,38 @@ def cmd_logs(app_name: str, hostname: str):
     run_ssh_command(host, folder, logs_command, interactive=True)
 
 
+def cmd_ps(app_name: str, hostname: str):
+    """Show container status for a docker compose app via SSH."""
+    if not CACHE_FILE.exists():
+        print("No cache found. Run 'main.py sync' first.")
+        return
+
+    with open(CACHE_FILE) as f:
+        cache = json.load(f)
+
+    apps = cache.get("apps", [])
+    matching_apps = [app for app in apps if app["name"] == app_name]
+    if hostname:
+        matching_apps = [app for app in matching_apps if hostname in app["remote"]]
+
+    if not matching_apps:
+        print(f"No app found with name: {app_name}")
+        return
+
+    if len(matching_apps) > 1:
+        print(
+            f"Multiple apps found with name: {app_name}. Perhaps add --H/--hostname filter?"
+        )
+        return
+
+    matching_app = matching_apps[0]
+
+    host = matching_app["remote"].split(":")[0]
+    folder = matching_app["remote"].split(":")[1]
+    ps_command = f"cd {app_name} && docker compose ps"
+    run_ssh_command(host, folder, ps_command, interactive=True)
+
+
 if __name__ == "__main__":
     import argparse
 
@@ -170,6 +202,16 @@ if __name__ == "__main__":
         dest="hostname",
         help="Filter by hostname for duplicate apps",
     )
+    parser_ps = subparsers.add_parser(
+        "ps", help="Show container status for a docker app"
+    )
+    parser_ps.add_argument("app_name", help="Name of the docker app")
+    parser_ps.add_argument(
+        "-H",
+        "--hostname",
+        dest="hostname",
+        help="Filter by hostname for duplicate apps",
+    )
 
     args = parser.parse_args()
 
@@ -179,6 +221,10 @@ if __name__ == "__main__":
         cmd_app()
     elif args.command == "logs":
         cmd_logs(args.app_name, args.hostname)
+    elif args.command == "ps":
+        cmd_ps(args.app_name, args.hostname)
     else:
-        print("Usage: python main.py <command> [options]\nCommands: sync, apps, logs")
+        print(
+            "Usage: python main.py <command> [options]\nCommands: sync, apps, logs, ps"
+        )
         sys.exit(1)
