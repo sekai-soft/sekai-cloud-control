@@ -13,6 +13,12 @@ if __name__ == "__main__":
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     parser_sync = subparsers.add_parser("sync", help="Sync docker apps from all hosts")
+    parser_sync.add_argument(
+        "-H",
+        "--hostname",
+        dest="hostname",
+        help="Filter by hostname to sync only that host",
+    )
     parser_apps = subparsers.add_parser("apps", help="List all cached docker apps")
     parser_apps.set_defaults(func=cmd_apps)
     parser_logs = subparsers.add_parser("logs", help="Stream logs for a docker app")
@@ -37,7 +43,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.command == "sync":
-        cmd_sync()
+        cmd_sync(args.hostname)
     elif args.command == "apps":
         cmd_apps()
     elif args.command == "logs":

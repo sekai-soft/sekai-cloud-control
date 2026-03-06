@@ -8,9 +8,16 @@ from .utils.hosts import HOSTS_FILE, CACHE_FILE, parse_hosts_file
 from .utils.ssh import get_docker_apps
 
 
-def cmd_sync() -> None:
+def cmd_sync(hostname: str | None = None) -> None:
     """Sync docker apps from all hosts and cache locally."""
     hosts = parse_hosts_file()
+
+    if hostname:
+        hosts = [h for h in hosts if h["hostname"] == hostname]
+        if not hosts:
+            print(f"No host found with hostname: {hostname}")
+            return
+
     all_apps = []
 
     for h in hosts:
