@@ -2,11 +2,11 @@ import sys
 from pathlib import Path
 
 from sekai_cloud_control import (
-    cmd_sync,
     cmd_apps,
     cmd_logs,
     cmd_ps,
     cmd_restart,
+    cmd_sync,
     cmd_upgrade,
 )
 
@@ -54,6 +54,7 @@ if __name__ == "__main__":
         dest="hostname",
         help="Filter by hostname to sync only that host",
     )
+
     parser_upgrade = subparsers.add_parser(
         "upgrade", help="Upgrade a docker compose app"
     )
