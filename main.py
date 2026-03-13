@@ -8,6 +8,7 @@ from sekai_cloud_control import (
     cmd_restart,
     cmd_sync,
     cmd_upgrade,
+    cmd_down,
 )
 
 CACHE_FILE = Path(__file__).parent / "cache.json"
@@ -66,6 +67,15 @@ if __name__ == "__main__":
         help="Filter by hostname for duplicate apps",
     )
 
+    parser_down = subparsers.add_parser("down", help="Stop a docker compose app")
+    parser_down.add_argument("app_name", help="Name of the docker app")
+    parser_down.add_argument(
+        "-H",
+        "--hostname",
+        dest="hostname",
+        help="Filter by hostname for duplicate apps",
+    )
+
     args = parser.parse_args()
 
     if args.command == "apps":
@@ -80,8 +90,10 @@ if __name__ == "__main__":
         cmd_sync(args.hostname)
     elif args.command == "upgrade":
         cmd_upgrade(args.app_name, args.hostname)
+    elif args.command == "down":
+        cmd_down(args.app_name, args.hostname)
     else:
         print(
-            "Usage: python main.py <command> [options]\nCommands: apps, logs, ps, restart, sync, upgrade"
+            "Usage: python main.py <command> [options]\nCommands: apps, logs, ps, restart, sync, upgrade, down"
         )
         sys.exit(1)

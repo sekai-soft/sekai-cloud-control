@@ -36,9 +36,9 @@ def run_ssh_command(
 
 
 def has_compose_yml(host: str, folder: str, app_name: str) -> bool:
-    """Check if an app folder contains a compose.yml file."""
+    """Check if an app folder contains a compose.yml or compose.yaml file."""
     result = subprocess.run(
-        f"ssh {host} test -f {folder}/{app_name}/compose.yml",
+        f"ssh {host} 'test -f {folder}/{app_name}/compose.yml || test -f {folder}/{app_name}/compose.yaml'",
         shell=True,
         capture_output=True,
     )
